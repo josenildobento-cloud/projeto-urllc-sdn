@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plataforma de Simulação SDN P4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/estilo.css">
+</head>
+<body>
+
+<header class="cabecalho">
+  <div class="marca">
+    <h1>Plataforma de Simulação SDN P4</h1>
+    <p>Monitor de SLA uRLLC · rede de transporte 5G</p>
+  </div>
+  <div class="cabecalho-dados">
+    <span class="pill desconectado" id="pill-conexao"><span class="pulso" aria-hidden="true"></span><span id="texto-conexao">aguardando controlador</span></span>
+    <span class="pill pill-cenario" id="rotulo-cenario">cenário —</span>
+  </div>
+</header>
+
+<main class="pagina">
+
+  <!-- coluna esquerda -->
+  <div class="coluna coluna-esquerda">
+
+    <section class="cartao">
+      <div class="cartao-cabecalho">
+        <h2>Topologia de Rede Interativa</h2>
+        <span class="dica">Clique nos links para alternar estado</span>
+      </div>
+      <div id="diagrama"></div>
+    </section>
+
+    <section class="cartao">
+      <div class="cartao-cabecalho">
+        <h2>Cenários de Simulação</h2>
+        <span class="dica">Clique para ativar</span>
+      </div>
+      <div class="grade-cenarios" id="grade-cenarios"></div>
+      <p class="retorno" id="retorno-cenario"></p>
+    </section>
+
+    <section class="cartao">
+      <div class="cartao-cabecalho">
+        <h2>Parâmetros do Simulador</h2>
+        <span class="dica">Altere e clique em Aplicar</span>
+      </div>
+      <form class="form-parametros" id="form-parametros">
+        <label>SLA Latência (ms)
+          <input type="number" step="0.1" min="0.1" id="param-limiar" required>
+        </label>
+        <label>Link Principal (Mbps)
+          <input type="number" step="0.1" min="0.1" id="param-banda-principal" required>
+        </label>
+        <label>Link Backup (Mbps)
+          <input type="number" step="0.1" min="0.1" id="param-banda-backup" required>
+        </label>
+        <label>Geração Robô (Mbps)
+          <input type="number" step="0.1" min="0.1" id="param-limite-robo" required>
+        </label>
+        <label>Geração PC (Mbps)
+          <input type="number" step="0.1" min="0.1" id="param-limite-background" required>
+        </label>
+        <button type="submit">Aplicar Configuração</button>
+      </form>
+      <p class="retorno" id="retorno-parametros"></p>
+    </section>
+
+  </div>
+
+  <!-- coluna direita -->
+  <div class="coluna coluna-direita">
+
+    <section class="grade-indicadores">
+      <div class="indicador indicador-gauge">
+        <div class="gauge-arco-caixa">
+          <svg class="gauge-arco" viewBox="0 0 120 68">
+            <path class="gauge-trilho" d="M10,60 A50,50 0 0 1 110,60"></path>
+            <path class="gauge-preenchimento" id="gauge-sla" d="M10,60 A50,50 0 0 1 110,60"></path>
+          </svg>
+          <div class="gauge-valor" id="valor-sla">—</div>
+        </div>
+        <p class="indicador-rotulo">SLA</p>
+      </div>
+      <div class="indicador indicador-gauge">
+        <div class="gauge-arco-caixa">
+          <svg class="gauge-arco" viewBox="0 0 120 68">
+            <path class="gauge-trilho" d="M10,60 A50,50 0 0 1 110,60"></path>
+            <path class="gauge-preenchimento" id="gauge-latencia" d="M10,60 A50,50 0 0 1 110,60"></path>
+          </svg>
+          <div class="gauge-valor" id="valor-latencia">—</div>
+        </div>
+        <p class="indicador-rotulo">Latência robô</p>
+      </div>
+      <div class="indicador indicador-gauge">
+        <div class="gauge-arco-caixa">
+          <svg class="gauge-arco" viewBox="0 0 120 68">
+            <path class="gauge-trilho" d="M10,60 A50,50 0 0 1 110,60"></path>
+            <path class="gauge-preenchimento" id="gauge-vazao" d="M10,60 A50,50 0 0 1 110,60"></path>
+          </svg>
+          <div class="gauge-valor" id="valor-vazao">—</div>
+        </div>
+        <p class="indicador-rotulo">Vazão robô</p>
+      </div>
+      <div class="indicador">
+        <span class="tile-valor cor-fundo" id="tile-vazao-fundo">—</span>
+        <p class="indicador-rotulo">Vazão background</p>
+      </div>
+      <div class="indicador">
+        <span class="tile-valor cor-alarme" id="tile-descartes-robo">0</span>
+        <p class="indicador-rotulo">Descartes robô</p>
+      </div>
+      <div class="indicador">
+        <span class="tile-valor cor-alarme" id="tile-descartes-fundo">0</span>
+        <p class="indicador-rotulo">Descartes BG</p>
+      </div>
+    </section>
+
+    <section class="cartao" id="contrato">
+      <div class="cartao-cabecalho">
+        <h2>Detalhes do contrato · Robô A</h2>
+      </div>
+      <dl class="contrato-indicadores">
+        <div><dt>p95 de latência</dt><dd id="p95-robo">—</dd></div>
+        <div><dt>caminho ativo (uRLLC)</dt><dd id="caminho-robo">—</dd></div>
+        <div><dt>caminho ativo (background)</dt><dd id="caminho-fundo">—</dd></div>
+        <div><dt>nível de atuação</dt><dd id="nivel-atuacao">—</dd></div>
+      </dl>
+      <p class="motivo" id="motivo-decisao">—</p>
+    </section>
+
+    <section class="cartao cartao-grafico">
+      <h2>Latência em tempo real (ms)</h2>
+      <p class="legenda-cartao">A linha tracejada marca o limiar contratado. Robô em azul, tráfego comum em âmbar.</p>
+      <div class="area-grafico"><canvas id="grafico-latencia"></canvas></div>
+      <p class="retorno" id="erro-graficos" hidden>Os gráficos não carregaram (Chart.js indisponível — verifique a conexão com a internet do navegador). O resto do painel continua funcionando.</p>
+    </section>
+
+    <section class="cartao cartao-grafico">
+      <h2>Vazão em tempo real (Mbps)</h2>
+      <p class="legenda-cartao">Vazão medida nas sondas de cada classe.</p>
+      <div class="area-grafico"><canvas id="grafico-throughput"></canvas></div>
+    </section>
+
+    <section class="cartao cartao-log">
+      <h2>Log de decisões SDN</h2>
+      <ol class="log" id="log-decisoes"><li class="vazio">Nenhuma decisão registrada ainda.</li></ol>
+    </section>
+
+  </div>
+
+  <!-- largura completa -->
+  <div class="coluna-completa">
+
+    <section class="cartao">
+      <h2>Rede comum (background)</h2>
+      <dl class="contrato-indicadores">
+        <div><dt>latência média atual</dt><dd id="latencia-fundo">—</dd></div>
+        <div><dt>throughput</dt><dd id="throughput-fundo">—</dd></div>
+        <div><dt>pacotes perdidos</dt><dd id="perdidos-fundo">—</dd></div>
+      </dl>
+      <h3>Telemetria dos roteadores P4</h3>
+      <table class="tabela-telemetria">
+        <thead>
+          <tr><th>roteador</th><th>classe</th><th>Mbps</th><th>descartes</th><th>fila (µs)</th></tr>
+        </thead>
+        <tbody id="corpo-telemetria"><tr><td colspan="5">sem dados</td></tr></tbody>
+      </table>
+    </section>
+
+    <section class="cartao cartao-console">
+      <h2>Console de inspeção P4</h2>
+      <div class="abas" id="abas-tcpdump"></div>
+      <pre class="console" id="console-tcpdump">selecione um nó para inspecionar o tráfego</pre>
+    </section>
+
+  </div>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>

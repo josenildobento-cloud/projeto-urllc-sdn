@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+p4/build/
+resultados/*.csv
+resultados/*.json
+resultados/*.jsonl
